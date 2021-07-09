@@ -23,6 +23,7 @@ We introduce **Bayesian convolutional neural networks with variational inference
 
 ### :bangbang: Our personal experiments
 The code is modified such that you can use `activation_type = 'rational'  # 'softplus' or 'relu' or 'lrelu'` in config_bayesian.py
+FGSM attack is added and an experiment can be run by running fgsm_experiment.py
 
 
 ### Layer types
