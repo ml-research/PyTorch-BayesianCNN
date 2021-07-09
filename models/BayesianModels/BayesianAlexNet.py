@@ -3,6 +3,7 @@ import math
 from layers import BBB_Linear, BBB_Conv2d
 from layers import BBB_LRT_Linear, BBB_LRT_Conv2d
 from layers import FlattenLayer, ModuleWrapper
+from rational.torch import Rational
 
 
 class BBBAlexNet(ModuleWrapper):
@@ -23,11 +24,19 @@ class BBBAlexNet(ModuleWrapper):
             BBBConv2d = BBB_Conv2d
         else:
             raise ValueError("Undefined layer_type")
-        
+
         if activation_type=='softplus':
+            print("Using softplus")
             self.act = nn.Softplus
         elif activation_type=='relu':
+            print("Using ReLU")
             self.act = nn.ReLU
+        elif activation_type=='lrelu':
+            print("Using Leaky ReLU")
+            self.act = nn.LeakyReLU
+        elif activation_type == 'rational':
+            print("Using rational")
+            self.act = Rational
         else:
             raise ValueError("Only softplus or relu supported")
 

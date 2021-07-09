@@ -8,6 +8,7 @@ import numpy as np
 from torch.optim import Adam, lr_scheduler
 from torch.nn import functional as F
 
+import pickle
 import data
 import utils
 import metrics
@@ -15,8 +16,11 @@ import config_bayesian as cfg
 from models.BayesianModels.Bayesian3Conv3FC import BBB3Conv3FC
 from models.BayesianModels.BayesianAlexNet import BBBAlexNet
 from models.BayesianModels.BayesianLeNet import BBBLeNet
+from rational.torch import Rational
+
 
 # CUDA settings
+capturing_epoch = [0, 1, 2, 4, 8, 16, 32, 64, 99, 149, 199]
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def getModel(net_type, inputs, outputs, priors, layer_type, activation_type):
@@ -30,7 +34,8 @@ def getModel(net_type, inputs, outputs, priors, layer_type, activation_type):
         raise ValueError('Network should be either [LeNet / AlexNet / 3Conv3FC')
 
 
-def train_model(net, optimizer, criterion, trainloader, num_ens=1, beta_type=0.1, epoch=None, num_epochs=None):
+def train_model(net, optimizer, criterion, trainloader, num_ens=1,
+                beta_type=0.1, epoch=None, num_epochs=None):
     net.train()
     training_loss = 0.0
     accs = []
@@ -47,7 +52,7 @@ def train_model(net, optimizer, criterion, trainloader, num_ens=1, beta_type=0.1
             net_out, _kl = net(inputs)
             kl += _kl
             outputs[:, :, j] = F.log_softmax(net_out, dim=1)
-        
+
         kl = kl / num_ens
         kl_list.append(kl.item())
         log_outputs = utils.logmeanexp(outputs, dim=2)
@@ -87,6 +92,8 @@ def validate_model(net, criterion, validloader, num_ens=1, beta_type=0.1, epoch=
 
 
 def run(dataset, net_type):
+    to_save = {"train_loss": [], "train_acc": [], "train_kl": [],
+               "valid_loss": [], "valid_acc": []}
 
     # Hyper Parameter settings
     layer_type = cfg.layer_type
@@ -119,6 +126,9 @@ def run(dataset, net_type):
     valid_loss_max = np.Inf
     for epoch in range(n_epochs):  # loop over the dataset multiple times
 
+        if epoch in capturing_epoch:
+            Rational.save_all_inputs(True)
+
         train_loss, train_acc, train_kl = train_model(net, optimizer, criterion, train_loader, num_ens=train_ens, beta_type=beta_type, epoch=epoch, num_epochs=n_epochs)
         valid_loss, valid_acc = validate_model(net, criterion, valid_loader, num_ens=valid_ens, beta_type=beta_type, epoch=epoch, num_epochs=n_epochs)
         lr_sched.step(valid_loss)
@@ -133,10 +143,27 @@ def run(dataset, net_type):
             torch.save(net.state_dict(), ckpt_name)
             valid_loss_max = valid_loss
 
+        to_save["train_loss"].append(train_loss)
+        to_save["train_acc"].append(train_acc)
+        to_save["train_kl"].append(train_kl)
+        to_save["valid_loss"].append(valid_loss)
+        to_save["valid_acc"].append(valid_acc)
+        if epoch in capturing_epoch:
+            Rational.capture_all(f"Epoch {epoch}")
+            Rational.save_all_inputs(False)
+
+    with open(f"{ckpt_name[:-3]}.pkl", 'wb') as handle:
+        pickle.dump(to_save, handle)
+
+    if activation_type == "rational":
+        Rational.export_evolution_graphs(f"{ckpt_dir}/Rational_{net_type}.gif")
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = "PyTorch Bayesian Model Training")
     parser.add_argument('--net_type', default='lenet', type=str, help='model')
-    parser.add_argument('--dataset', default='MNIST', type=str, help='dataset = [MNIST/CIFAR10/CIFAR100]')
+    parser.add_argument('--dataset', default='MNIST', type=str,
+                        help='dataset = [MNIST/CIFAR10/CIFAR100]')
     args = parser.parse_args()
 
     run(args.dataset, args.net_type)

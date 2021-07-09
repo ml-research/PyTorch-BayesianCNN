@@ -62,7 +62,7 @@ def getDataset(dataset):
         testset = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_cifar)
         num_classes = 100
         inputs = 3
-        
+
     elif(dataset == 'MNIST'):
         trainset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform_mnist)
         testset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform_mnist)
@@ -178,9 +178,9 @@ def getDataloader(trainset, testset, valid_size, batch_size, num_workers):
 
     train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
         sampler=train_sampler, num_workers=num_workers)
-    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, 
+    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
         sampler=valid_sampler, num_workers=num_workers)
-    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, 
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
         num_workers=num_workers)
 
     return train_loader, valid_loader, test_loader
