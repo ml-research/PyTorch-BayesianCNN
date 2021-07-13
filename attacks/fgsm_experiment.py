@@ -8,15 +8,15 @@ import numpy as np
 from torch.optim import Adam, lr_scheduler
 from torch.nn import functional as F
 
-import PyTorchBayesianCNN.data as data
-import PyTorchBayesianCNN.utils as utils
-import PyTorchBayesianCNN.metrics as metrics
-import PyTorchBayesianCNN.config_bayesian as cfg
-from PyTorchBayesianCNN.models.BayesianModels.Bayesian3Conv3FC import BBB3Conv3FC
-from PyTorchBayesianCNN.models.BayesianModels.BayesianAlexNet import BBBAlexNet
-from PyTorchBayesianCNN.models.BayesianModels.BayesianLeNet import BBBLeNet
-from PyTorchBayesianCNN.attacks.fgsm import FGSM
-from PyTorchBayesianCNN.main_bayesian import train_model, getModel, validate_model
+import data
+import utils
+import metrics
+import config_bayesian as cfg
+from models.BayesianModels.Bayesian3Conv3FC import BBB3Conv3FC
+from models.BayesianModels.BayesianAlexNet import BBBAlexNet
+from models.BayesianModels.BayesianLeNet import BBBLeNet
+from attacks.fgsm import FGSM
+from main_bayesian import train_model, getModel, validate_model
 
 # CUDA settings
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -47,7 +47,7 @@ def evaluate_model(net, testloader, classes, device):
 def load_checkpoint(model, ckpt_path):
     model.load_state_dict(torch.load(ckpt_path))
 
-def test(model, device, test_loader, epsilon=0.3):
+def test(model, device, test_loader, epsilon=0.3, batch_size=256):
     #this code is taken from https://pytorch.org/tutorials/beginner/fgsm_tutorial.html
 
     # Accuracy counter
@@ -55,53 +55,57 @@ def test(model, device, test_loader, epsilon=0.3):
     adv_examples = []
 
     # Loop over all examples in test set
-    for data, target in test_loader:
+    for images, targets in test_loader:
+        for data, target in zip(images, targets):
+            data = torch.unsqueeze(data, 0)
+            target = torch.unsqueeze(target, 0)
 
-        # Send the data and label to the device
-        data, target = data.to(device), target.to(device)
+            # Send the data and label to the device
+            data, target = data.to(device), target.to(device)
 
-        # Set requires_grad attribute of tensor. Important for Attack
-        data.requires_grad = True
+            # Set requires_grad attribute of tensor. Important for Attack
+            data.requires_grad = True
 
-        # Forward pass the data through the model
-        output = model(data)[0]
-        init_pred = output.max(1)[1] # get the index of the max log-probability
+            # Forward pass the data through the model
+            output = model(data)[0]
+            init_pred = output.max(1)[1] # get the index of the max log-probability
 
-        # If the initial prediction is wrong, dont bother attacking, just move on
-        if init_pred.tolist() != target.tolist(): # but this now moves on over a bunch of images?
-            continue
+            # If the initial prediction is wrong, dont bother attacking, just move on
+            if init_pred.tolist() != target.tolist(): # but this now moves on over a bunch of images?
+                continue
 
-        # Calculate the loss
-        loss = F.nll_loss(output, target)
+            # Calculate the loss
+            loss = F.nll_loss(output, target)
 
-        # Zero all existing gradients
-        model.zero_grad()
+            # Zero all existing gradients
+            model.zero_grad()
 
-        # Calculate gradients of model in backward pass
-        loss.backward()
+            # Calculate gradients of model in backward pass
+            loss.backward()
 
-        # Collect datagrad
-        data_grad = data.grad.data
+            # Collect datagrad
+            data_grad = data.grad.data
 
-        # Call FGSM Attack
-        perturbed_data = FGSM.attack(data, data_grad, epsilon)
+            # Call FGSM Attack
+            perturbed_data = FGSM.attack(data, data_grad, epsilon)
 
-        # Re-classify the perturbed image
-        output = model(perturbed_data)[0]
+            # Re-classify the perturbed image
+            output = model(perturbed_data)[0]
 
-        # Check for success
-        final_pred = output.max(1)[1] # get the index of the max log-probability
-        if final_pred.tolist() == target.tolist():
-            correct += 1 # this case is for unsuccessfull attacks
-        else:
-            # Save some adv examples for visualization later
-            if len(adv_examples) < 5:
-                adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
-                adv_examples.append( (init_pred.tolist(), final_pred.tolist(), adv_ex) )
+            # Check for success
+            final_pred = output.max(1)[1] # get the index of the max log-probability
+            if final_pred.tolist() == target.tolist():
+                correct += 1 # this case is for unsuccessfull attacks
+            else:
+                # Save some adv examples for visualization later
+                if len(adv_examples) < 5:
+                    adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
+                    adv_examples.append( (init_pred.tolist(), final_pred.tolist(), adv_ex) )
 
     # Calculate final accuracy for this epsilon
-    final_acc = correct/float(len(test_loader))
-    print("Epsilon: {}\tTest Accuracy = {} / {} = {}".format(epsilon, correct, len(test_loader), final_acc))
+    n = len(test_loader) * batch_size
+    final_acc = correct/float(n)
+    print("Epsilon: {}\tTest Accuracy = {} / {} = {}".format(epsilon, correct, n, final_acc))
 
     # Return the accuracy and an adversarial example
     return final_acc, adv_examples
@@ -167,7 +171,7 @@ def run(dataset, net_type):
     # Run fgsm attack for each epsilon
     epsilons = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5]
     for eps in epsilons:
-        acc, ex = test(net, device, test_loader, eps)
+        acc, ex = test(net, device, test_loader, eps, batch_size)
         accuracies.append(acc)
         examples.append(ex)
 
