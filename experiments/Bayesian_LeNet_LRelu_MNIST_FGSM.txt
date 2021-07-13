@@ -1,0 +1,19 @@
+Using Leaky ReLU
+Accuracy for class 0     is: 99.4 %
+Accuracy for class 1     is: 99.5 %
+Accuracy for class 2     is: 99.2 %
+Accuracy for class 3     is: 99.2 %
+Accuracy for class 4     is: 99.1 %
+Accuracy for class 5     is: 98.4 %
+Accuracy for class 6     is: 98.3 %
+Accuracy for class 7     is: 98.8 %
+Accuracy for class 8     is: 98.7 %
+Accuracy for class 9     is: 97.9 %
+Epsilon: 0.05	Test Accuracy = 9537 / 10240 = 0.93134765625
+Epsilon: 0.1	Test Accuracy = 8721 / 10240 = 0.85166015625
+Epsilon: 0.15	Test Accuracy = 6904 / 10240 = 0.67421875
+Epsilon: 0.2	Test Accuracy = 4420 / 10240 = 0.431640625
+Epsilon: 0.25	Test Accuracy = 2230 / 10240 = 0.2177734375
+Epsilon: 0.3	Test Accuracy = 1063 / 10240 = 0.10380859375
+Epsilon: 0.4	Test Accuracy = 449 / 10240 = 0.04384765625
+Epsilon: 0.5	Test Accuracy = 519 / 10240 = 0.05068359375

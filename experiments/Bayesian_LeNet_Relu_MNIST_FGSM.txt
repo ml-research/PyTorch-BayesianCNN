@@ -1,0 +1,19 @@
+Using ReLU
+Accuracy for class 0     is: 99.0 %
+Accuracy for class 1     is: 99.5 %
+Accuracy for class 2     is: 99.2 %
+Accuracy for class 3     is: 98.5 %
+Accuracy for class 4     is: 99.2 %
+Accuracy for class 5     is: 98.7 %
+Accuracy for class 6     is: 97.9 %
+Accuracy for class 7     is: 98.8 %
+Accuracy for class 8     is: 98.6 %
+Accuracy for class 9     is: 97.1 %
+Epsilon: 0.05	Test Accuracy = 9503 / 10240 = 0.92802734375
+Epsilon: 0.1	Test Accuracy = 8611 / 10240 = 0.84091796875
+Epsilon: 0.15	Test Accuracy = 6883 / 10240 = 0.67216796875
+Epsilon: 0.2	Test Accuracy = 4321 / 10240 = 0.42197265625
+Epsilon: 0.25	Test Accuracy = 2193 / 10240 = 0.21416015625
+Epsilon: 0.3	Test Accuracy = 1014 / 10240 = 0.0990234375
+Epsilon: 0.4	Test Accuracy = 407 / 10240 = 0.03974609375
+Epsilon: 0.5	Test Accuracy = 389 / 10240 = 0.03798828125
