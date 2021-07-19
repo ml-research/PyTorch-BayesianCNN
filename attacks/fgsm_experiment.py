@@ -1,6 +1,10 @@
 from __future__ import print_function
 
+import sys
 import os
+sys.path.insert(0, os.path.abspath('../.'))
+sys.path.insert(0, os.path.abspath('.'))
+
 import argparse
 
 import torch
@@ -20,6 +24,8 @@ from PyTorchBayesianCNN.main_bayesian import train_model, getModel, validate_mod
 
 # CUDA settings
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+cifar_class = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
 def evaluate_model(net, testloader, classes, device):
     net.eval()
@@ -69,7 +75,8 @@ def test(model, device, test_loader, epsilon=0.3):
 
         # If the initial prediction is wrong, dont bother attacking, just move on
         if init_pred.tolist() != target.tolist(): # but this now moves on over a bunch of images?
-            continue
+            # continue
+            pass
 
         # Calculate the loss
         loss = F.nll_loss(output, target)
@@ -106,13 +113,13 @@ def test(model, device, test_loader, epsilon=0.3):
     # Return the accuracy and an adversarial example
     return final_acc, adv_examples
 
-def run(dataset, net_type):
+def run(dataset, net_type, activation_type):
     import matplotlib.pyplot as plt
     #this code is largely adopted from main_bayesian.py
 
     # Hyper Parameter settings
     layer_type = cfg.layer_type
-    activation_type = cfg.activation_type
+    # activation_type = cfg.activation_type
     priors = cfg.priors
 
     train_ens = cfg.train_ens
@@ -129,7 +136,7 @@ def run(dataset, net_type):
         trainset, testset, valid_size, batch_size, num_workers)
     net = getModel(net_type, inputs, outputs, priors, layer_type, activation_type).to(device)
 
-    ckpt_name = f'../checkpoints/{dataset}/bayesian/model_{net_type}_{layer_type}_{activation_type}.pt'
+    ckpt_name = f'checkpoints/{dataset}/bayesian/model_{net_type}_{layer_type}_{activation_type}.pt'
 
     if os.path.exists(ckpt_name):
         load_checkpoint(net, ckpt_name)
@@ -182,13 +189,19 @@ def run(dataset, net_type):
             if j == 0:
                 plt.ylabel("Eps: {}".format(epsilons[i]), fontsize=14)
             orig, adv, ex = examples[i][j]
-            plt.title("{} -> {}".format(orig[0], adv[0]))
-            plt.imshow(ex, cmap="gray")
+
+            if dataset == "MNIST":
+                plt.title("{} -> {}".format(orig[0], adv[0]))
+                plt.imshow(ex[0].T, cmap="gray")
+            else:
+                plt.title("{} -> {}".format(cifar_class[orig[0]], cifar_class[adv[0]]))
+                plt.imshow(np.moveaxis(ex[0], 0, 2))
     plt.tight_layout()
     plt.show()
 
 if __name__ == '__main__':
     model = 'lenet'
-    dataset ='MNIST'
+    dataset ='CIFAR10'
+    activation_type = 'rational'
 
-    run(dataset, model)
+    run(dataset, model, activation_type)

@@ -1,7 +1,7 @@
 ############### Configuration file for Bayesian ###############
 layer_type = 'lrt'  # 'bbb' or 'lrt'
 # activation_type = 'softplus'  # 'softplus' or 'relu'
-activation_type = 'relu'  # 'softplus' or 'relu'
+activation_type = 'lrelu'  # 'softplus' or 'relu'
 # activation_type = 'rational'  # 'softplus' or 'relu' or 'lrelu'
 priors={
     'prior_mu': 0,
