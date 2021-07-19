@@ -35,6 +35,7 @@ class BBBLeNet(ModuleWrapper):
             print("Using Leaky ReLU")
             self.act = nn.LeakyReLU
         elif activation_type == 'rational':
+            import ipdb; ipdb.set_trace()
             print("Using rational")
             self.act = Rational
         else:
