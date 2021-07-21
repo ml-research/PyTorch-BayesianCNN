@@ -203,7 +203,7 @@ def run(dataset, net_type, activation_type):
     plt.show()
 
 if __name__ == '__main__':
-    model = 'lenet'
+    model = 'alexnet'
     dataset ='CIFAR10'
     activation_type = 'lrelu'
 
