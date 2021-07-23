@@ -5,6 +5,8 @@ class FGSM:
     Fast Gradient Sign Attack https://arxiv.org/abs/1412.6572
     Code from https://pytorch.org/tutorials/beginner/fgsm_tutorial.html
     """
+
+    @staticmethod
     def attack(image, data_grad, epsilon=0.3):
         # Collect the element-wise sign of the data gradient
         sign_data_grad = data_grad.sign()
