@@ -1,0 +1,19 @@
+Using softplus
+Accuracy for class 0     is: 99.5 %
+Accuracy for class 1     is: 99.3 %
+Accuracy for class 2     is: 99.1 %
+Accuracy for class 3     is: 98.7 %
+Accuracy for class 4     is: 98.3 %
+Accuracy for class 5     is: 97.6 %
+Accuracy for class 6     is: 98.4 %
+Accuracy for class 7     is: 98.5 %
+Accuracy for class 8     is: 98.5 %
+Accuracy for class 9     is: 98.0 %
+Epsilon: 0.05	Test Accuracy = 9332 / 10240 = 0.911328125
+Epsilon: 0.1	Test Accuracy = 7484 / 10240 = 0.730859375
+Epsilon: 0.15	Test Accuracy = 3272 / 10240 = 0.31953125
+Epsilon: 0.2	Test Accuracy = 617 / 10240 = 0.06025390625
+Epsilon: 0.25	Test Accuracy = 93 / 10240 = 0.00908203125
+Epsilon: 0.3	Test Accuracy = 12 / 10240 = 0.001171875
+Epsilon: 0.4	Test Accuracy = 2 / 10240 = 0.0001953125
+Epsilon: 0.5	Test Accuracy = 0 / 10240 = 0.0
