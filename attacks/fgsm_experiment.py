@@ -2,8 +2,6 @@ from __future__ import print_function
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath('../.'))
-sys.path.insert(0, os.path.abspath('.'))
 
 import argparse
 
@@ -19,7 +17,7 @@ import config_bayesian as cfg
 from models.BayesianModels.Bayesian3Conv3FC import BBB3Conv3FC
 from models.BayesianModels.BayesianAlexNet import BBBAlexNet
 from models.BayesianModels.BayesianLeNet import BBBLeNet
-from attacks.fgsm import FGSM
+from attacks import FGSM
 from main_bayesian import train_model, getModel, validate_model
 
 # CUDA settings
@@ -61,27 +59,27 @@ def test(model, device, test_loader, epsilon=0.3, batch_size=256):
     adv_examples = []
 
     # Loop over all examples in test set
-    for images, targets in test_loader:
-        for data, target in zip(images, targets):
-            data = torch.unsqueeze(data, 0)
-            target = torch.unsqueeze(target, 0)
+    for images, labels in test_loader:
+        for image, label in zip(images, labels):
+            image = torch.unsqueeze(image, 0)
+            label = torch.unsqueeze(label, 0)
 
             # Send the data and label to the device
-            data, target = data.to(device), target.to(device)
+            image, label = image.to(device), label.to(device)
 
             # Set requires_grad attribute of tensor. Important for Attack
-            data.requires_grad = True
+            image.requires_grad = True
 
             # Forward pass the data through the model
-            output = model(data)[0]
+            output = model(image)[0]
             init_pred = output.max(1)[1] # get the index of the max log-probability
 
             # If the initial prediction is wrong, dont bother attacking, just move on
-            if init_pred.tolist() != target.tolist(): # but this now moves on over a bunch of images?
+            if init_pred != label:
                 continue
 
             # Calculate the loss
-            loss = F.nll_loss(output, target)
+            loss = F.nll_loss(output, label)
 
             # Zero all existing gradients
             model.zero_grad()
@@ -90,23 +88,23 @@ def test(model, device, test_loader, epsilon=0.3, batch_size=256):
             loss.backward()
 
             # Collect datagrad
-            data_grad = data.grad.data
+            data_grad = image.grad.data
 
             # Call FGSM Attack
-            perturbed_data = FGSM.attack(data, data_grad, epsilon)
+            perturbed_image = FGSM.attack(image, data_grad, epsilon)
 
             # Re-classify the perturbed image
-            output = model(perturbed_data)[0]
+            output = model(perturbed_image)[0]
 
             # Check for success
             final_pred = output.max(1)[1] # get the index of the max log-probability
-            if final_pred.tolist() == target.tolist():
+            if final_pred == label:
                 correct += 1 # this case is for unsuccessfull attacks
             else:
                 # Save some adv examples for visualization later
                 if len(adv_examples) < 5:
-                    adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
-                    adv_examples.append( (init_pred.tolist(), final_pred.tolist(), adv_ex) )
+                    adv_ex = perturbed_image.squeeze().detach().cpu().numpy()
+                    adv_examples.append( (init_pred, final_pred, adv_ex) )
 
     # Calculate final accuracy for this epsilon
     n = len(test_loader) * batch_size
@@ -203,8 +201,8 @@ def run(dataset, net_type, activation_type):
     plt.show()
 
 if __name__ == '__main__':
-    model = 'alexnet'
-    dataset ='CIFAR10'
-    activation_type = 'lrelu'
+    model = 'lenet'
+    dataset ='MNIST'
+    activation_type = 'softplus'
 
     run(dataset, model, activation_type)
