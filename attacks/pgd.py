@@ -7,7 +7,7 @@ class PGD:
     """
 
     @staticmethod
-    def attack(image, label, device, model, epsilon=0.3, steps=50, step_size = 2/255):
+    def attack(image, label, device, model, epsilon=0.3, steps=50, step_size = 2/255, no_kl=True):
         model.zero_grad()
         # random start
         perturbation = torch.zeros_like(image).uniform_(-epsilon, epsilon)
@@ -17,7 +17,7 @@ class PGD:
         perturbed_image = torch.clamp(perturbed_image, 0, 1)
         perturbed_image.detach().requires_grad_(True)
         for _ in range(steps):
-            output = model(perturbed_image)[0]
+            output = model(perturbed_image, no_kl)
             loss = F.nll_loss(output, label)
             #loss.backward()
             grad = torch.autograd.grad(loss, perturbed_image, retain_graph=False, create_graph=False)[0]

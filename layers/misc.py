@@ -13,10 +13,12 @@ class ModuleWrapper(nn.Module):
             if hasattr(m, 'set_flag'):
                 m.set_flag(flag_name, value)
 
-    def forward(self, x):
+    def forward(self, x, no_kl=False):
         for module in self.children():
             x = module(x)
 
+        if (no_kl):
+            return x
         kl = 0.0
         for module in self.modules():
             if hasattr(module, 'kl_loss'):

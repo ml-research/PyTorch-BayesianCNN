@@ -23,7 +23,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 cifar_class = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
-def evaluate_model(net, testloader, classes, device):
+def evaluate_model(net, testloader, classes, device, no_kl=True):
     net.eval()
     correct_pred = {classname: 0 for classname in classes}
     total_pred = {classname: 0 for classname in classes}
@@ -32,8 +32,8 @@ def evaluate_model(net, testloader, classes, device):
     with torch.no_grad():
         for i, (inputs, labels) in enumerate(testloader):
             inputs, labels = inputs.to(device), labels.to(device)
-            outputs = net(inputs)
-            _, predictions = torch.max(outputs[0], 1)
+            outputs = net(inputs, no_kl=no_kl)
+            _, predictions = torch.max(outputs, 1)
             # collect the correct predictions for each class
             for label, prediction in zip(labels, predictions):
                 if label == prediction:
@@ -49,7 +49,7 @@ def evaluate_model(net, testloader, classes, device):
 def load_checkpoint(model, ckpt_path):
     model.load_state_dict(torch.load(ckpt_path))
 
-def test(model, device, test_loader, epsilon=0.3, batch_size=256):
+def test(model, device, test_loader, epsilon=0.3, batch_size=256, no_kl=True):
     #this code is taken from https://pytorch.org/tutorials/beginner/fgsm_tutorial.html
 
     # Accuracy counter
@@ -68,7 +68,7 @@ def test(model, device, test_loader, epsilon=0.3, batch_size=256):
             image.requires_grad = True
 
             # Forward pass the data through the model
-            output = model(image)[0]
+            output = model(image, no_kl=no_kl)
             init_pred = output.max(1)[1] # get the index of the max log-probability
 
             # If the initial prediction is wrong, dont bother attacking, just move on
@@ -78,7 +78,7 @@ def test(model, device, test_loader, epsilon=0.3, batch_size=256):
             pertubed_image = PGD.attack(image, label, device, model, epsilon=epsilon)
 
             # Re-classify the perturbed image
-            output = model(pertubed_image)[0]
+            output = model(pertubed_image, no_kl=no_kl)
 
             # Check for success
             final_pred = output.max(1)[1] # get the index of the max log-probability
@@ -152,7 +152,8 @@ def run(dataset, net_type, activation_type):
                 valid_loss_max = valid_loss
     classes = [str(x) for x in range(0, 10)] # for MNIST
     # evaluate accuracy for benign images
-    evaluate_model(net, test_loader, classes, device)
+    no_kl = True
+    evaluate_model(net, test_loader, classes, device, no_kl=no_kl)
 
     accuracies = []
     examples = []
@@ -160,7 +161,7 @@ def run(dataset, net_type, activation_type):
     # Run attack for each epsilon
     epsilons = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5]
     for eps in epsilons:
-        acc, ex = test(net, device, test_loader, eps, batch_size)
+        acc, ex = test(net, device, test_loader, eps, batch_size, no_kl=no_kl)
         accuracies.append(acc)
         examples.append(ex)
 
