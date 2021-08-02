@@ -12,18 +12,20 @@ import config_bayesian as cfg
 from models.BayesianModels.Bayesian3Conv3FC import BBB3Conv3FC
 from models.BayesianModels.BayesianAlexNet import BBBAlexNet
 from models.BayesianModels.BayesianLeNet import BBBLeNet
+#whitebox attacks
 from art.attacks.evasion import FastGradientMethod
 from art.attacks.evasion import ProjectedGradientDescentPyTorch
+from art.attacks.evasion import HighConfidenceLowUncertainty
+from art.attacks.evasion import ShadowAttack
+#blackbox attacks
 from art.attacks.evasion import ZooAttack
 from art.attacks.evasion import HopSkipJump
-from art.attacks.evasion import HighConfidenceLowUncertainty
 from art.attacks.evasion import BoundaryAttack
 from art.attacks.evasion import ThresholdAttack
 from art.attacks.evasion import SimBA
 from art.attacks.evasion import SquareAttack
 from art.attacks.evasion import SpatialTransformation
-from art.attacks.evasion import ShadowAttack
-from art.attacks.evasion import ShapeShifter
+
 from attacks.pytorch_bayesian import PyTorchBaysianClassifier
 from main_bayesian import train_model, getModel, validate_model
 
